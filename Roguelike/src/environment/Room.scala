@@ -59,7 +59,9 @@ class Room(top : Int, left : Int, height : Int, width : Int) {
   }
   
   def drawDoors(canvas : Array[Array[Char]]) = {
-    
+    for((i, j) <- doors.keys) {
+      canvas(i + top)(j + left) = '0'
+    }
   }
   
   def drawPlayerCharacter(canvas : Array[Array[Char]]) = {
