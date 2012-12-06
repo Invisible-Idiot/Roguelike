@@ -85,22 +85,38 @@ class Room(top : Int, left : Int, height : Int, width : Int) {
     
     monsters.get(newPlayerPosition) match {
       case Some(monster) => attack(playerCharacter, monster)
-      case None =>
-        if(inLimits(newPlayerPosition)) {
-          playerPosition = newPlayerPosition
-        }
-        else doors.get(newPlayerPosition) match {
-          case Some(tunnel) => {
-            tunnel.enter(playerCharacter)
-            playerCharacter = None
-          }
-          case None => {}
-        }
+      case None => moveTo(newPlayerPosition)
+    }
+  }
+  
+  def moveTo(newPlayerPosition : (Int, Int)) = {
+    if(inLimits(newPlayerPosition)) {
+      playerPosition = newPlayerPosition
+      
+      
+    }
+    else doors.get(newPlayerPosition) match {
+      case Some(tunnel) => {
+        tunnel.enter(playerCharacter)
+        playerCharacter = None
+      }
+      case None => {}
     }
   }
   
   def inLimits(position : (Int, Int)) : Boolean = {
     0 <= position._1 && position._1 < height && 0 <= position._2 && position._2 < width
+  }
+  
+  def step((i : Int, j : Int)) = {
+    map(i)(j) match {
+      case trap : Trap => {
+        trap.spring(playerCharacter)
+        map(i)(j) = trap.deactivate
+      }
+      case item : Item => playerCharacter.pickUp(item)
+      case _ => {}
+    }
   }
 }
 
