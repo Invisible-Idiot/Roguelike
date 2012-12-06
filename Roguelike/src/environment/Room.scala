@@ -2,18 +2,37 @@ package environment
 
 import elements._
 
+sealed abstract class Direction {
+  def movement =
+    this match {
+      case Left => (position) => (position._1, position._2 - 1)
+      case Right => (position) => (position._1, position._2 + 1)
+      case Up => (position) => (position._1 - 1, position._2)
+      case Down => (position) => (position._1 + 1, position._2)
+    }
+}
+
+case class Left extends Direction
+case class Right extends Direction
+case class Up extends Direction
+case class Down extends Direction
+
 class Room(top : Int, left : Int, height : Int, width : Int) {
   val map : Array[Array[Element]] = Array.ofDim(height, width)
   var playerCharacter : Option[PlayerCharacter] = None
   var playerPosition : (Int, Int) = (-1, -1)
   var monsters : Map[(Int, Int), Monster] = populate(height, width)
+  val doors : Map[(Int, Int), Tunnel] = generateDoors()
   
   def draw(canvas : Array[Array[Char]]) = {
     drawWalls(canvas)
-    drawFloor(canvas)
-    drawDoors(canvas)
-    drawPlayerCharacter(canvas)
-    drawMonsters(canvas)
+    
+    if(playerCharacter.isSome) {
+      drawFloor(canvas)
+      drawDoors(canvas)
+      drawPlayerCharacter(canvas)
+      drawMonsters(canvas)
+    }
   }
   
   def drawWalls(canvas : Array[Array[Char]]) = {
@@ -44,9 +63,7 @@ class Room(top : Int, left : Int, height : Int, width : Int) {
   }
   
   def drawPlayerCharacter(canvas : Array[Array[Char]]) = {
-    if(playerCharacter.isSome) {
-      canvas(playerCharacterPosition._1)(playerCharacterPosition._2) = playerCharacter.toChar
-    }
+    canvas(playerPosition._1)(playerPosition._2) = playerCharacter.toChar
   }
   
   def drawMonsters(canvas : Array[Array[Char]]) = {
@@ -61,6 +78,29 @@ class Room(top : Int, left : Int, height : Int, width : Int) {
   
   def tick() = {
     
+  }
+  
+  def move(direction : Direction) = {
+    val newPlayerPosition = direction.movement(playerPosition)
+    
+    monsters.get(newPlayerPosition) match {
+      case Some(monster) => attack(playerCharacter, monster)
+      case None =>
+        if(inLimits(newPlayerPosition)) {
+          playerPosition = newPlayerPosition
+        }
+        else doors.get(newPlayerPosition) match {
+          case Some(tunnel) => {
+            tunnel.enter(playerCharacter)
+            playerCharacter = None
+          }
+          case None => {}
+        }
+    }
+  }
+  
+  def inLimits(position : (Int, Int)) : Boolean = {
+    0 <= position._1 && position._1 < height && 0 <= position._2 && position._2 < width
   }
 }
 
