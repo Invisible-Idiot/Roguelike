@@ -5,26 +5,20 @@
 
 package elements
 
-sealed abstract class Element
+sealed abstract class Element {
+  def toChar : Char =
+    this match {
+      case Space => '.'
+      case Staircase => '%'
+      case Trap => '.'
+      case DeactivatedTrap => '^'
+      case Gold => '*'
+    }
+}
 
-sealed case class Space {
-  @Override
-  def toString : String = "."
-}
-sealed case class Staircase {
-  @Override
-  def toString : String = "%"
-}
-sealed case class Trap {
-  @Override
-  def toString : String = "."
-}
-sealed case class DeactivatedTrap {
-  @Override
-  def toString : String = "^"
-}
-sealed case class Gold {
-  @Override
-  def toString : String = "*"
-}
+sealed case class Space
+sealed case class Staircase
+sealed case class Trap
+sealed case class DeactivatedTrap
+sealed case class Gold
 case class Item
