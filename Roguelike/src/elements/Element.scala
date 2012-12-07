@@ -16,9 +16,9 @@ sealed abstract class Element {
     }
 }
 
-sealed case class Space
-sealed case class Staircase
+sealed case object Space
+sealed case object Staircase
 sealed case class Trap
 sealed case class DeactivatedTrap
-sealed case class Gold
+sealed case object Gold
 case class Item
