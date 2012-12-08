@@ -25,3 +25,4 @@ sealed case class Trap() extends Element {
 sealed case class DeactivatedTrap() extends Element
 case object Gold extends Element
 case class Item extends Element
+
