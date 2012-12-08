@@ -5,13 +5,19 @@
 
 package roguelike
 
+import environment.Dungeon
+
 object Main {
 
   /**
    * @param args the command line arguments
    */
   def main(args: Array[String]): Unit = {
-    println("Hello, rouguelike!!")
+    while(true) {
+      val drawing = Dungeon.draw()
+      val input = Console.in.read.toChar
+      Dungeon.update(input)
+    }
   }
 
 }

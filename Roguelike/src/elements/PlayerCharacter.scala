@@ -6,5 +6,13 @@
 package elements
 
 class PlayerCharacter {
+  def toChar : Char = PlayerCharacter.toChar
+  
+  def pickUp(item : Item) = {}
+  
+  def attack(monster : Monster) = {}
+}
 
+object PlayerCharacter {
+  def toChar : Char = '@'
 }

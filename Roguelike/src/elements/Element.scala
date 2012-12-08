@@ -10,15 +10,18 @@ sealed abstract class Element {
     this match {
       case Space => '.'
       case Staircase => '%'
-      case Trap => '.'
-      case DeactivatedTrap => '^'
+      case Trap() => '.'
+      case DeactivatedTrap() => '^'
       case Gold => '*'
     }
 }
 
-sealed case object Space
-sealed case object Staircase
-sealed case class Trap
-sealed case class DeactivatedTrap
-sealed case object Gold
-case class Item
+case object Space extends Element
+case object Staircase extends Element
+sealed case class Trap() extends Element {
+  def spring(playerCharacter : PlayerCharacter) = {}
+  def deactivate = DeactivatedTrap()
+}
+sealed case class DeactivatedTrap() extends Element
+case object Gold extends Element
+case class Item extends Element

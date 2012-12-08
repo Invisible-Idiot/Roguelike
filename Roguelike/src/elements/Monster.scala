@@ -5,6 +5,6 @@
 
 package elements
 
-class Monster {
-
+sealed abstract class Monster {
+  def toChar : Char = 'E'
 }
