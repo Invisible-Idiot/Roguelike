@@ -4,14 +4,14 @@
  */
 
 package roguelike
-include elements._
+import elements._
 class ItemMenu(_items : List[Item]) {
   var selected : Int
   var items : List[Item] = _items
   
-  def UseSelected()
+  def UseSelected(playerCharacter : PlayerCharacter)
   {
-    items.apply(selected).Use()
+    items.apply(selected).Use(playerCharacter)
   }
   
   def SelectUp()
@@ -31,7 +31,7 @@ class ItemMenu(_items : List[Item]) {
   }
   
   @Override
-  def toString() : String
+  def toString() : String = 
   {
     var retvalue : String = ""
     for(a : Int <- 0 until items.lenght - 1)
