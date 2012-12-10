@@ -6,5 +6,8 @@
 package elements
 
 class Item {
-
+  def Use()
+  {
+    
+  }
 }
