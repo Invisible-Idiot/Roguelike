@@ -6,8 +6,8 @@
 package elements
 
 sealed abstract class Monster(_damage : Int, _health : Int) {
-  var damage : Int = _damage
-  var health : Int = _health
+  private var damage : Int = _damage
+  private var health : Int = _health
 
       def toChar = this match{
       case a : MonsterA => 'A'

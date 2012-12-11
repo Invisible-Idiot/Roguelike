@@ -7,14 +7,14 @@ package elements
 
 class PlayerCharacter {
   def toChar : Char = PlayerCharacter.toChar
-  var items : Set[Item] = Set()
-  var health : Int = 100
-  var attackDamage : Int = 0
-  var equipament : Equipament
+  private var items : List[Item] = List()
+  private var health : Int = 100
+  private var attackDamage : Int = 0
+  private var equipament : Option[Equipament] = None
   
   def pickUp(item : Item) =  
   {
-    items = items.+(item)
+    items = items.union(List(item))
   }
   
   def sufferDamage(damage : Int) : Boolean = // retorna verdadeiro se o personagem morreu
@@ -28,20 +28,28 @@ class PlayerCharacter {
   
   def attack(monster : Monster) = 
   {
-    monster.sufferDamage(attackDamage + equipament.getDamage())
+    if(equipament.isDefined)
+      monster.sufferDamage(attackDamage + equipament.get.getDamage)
+    else
+      monster.sufferDamage(attackDamage) 
   }
   
-  def setEquipament(equip : Equipament) =
+  def setEquipament(equip : Option[Equipament]) =
   {
     this.equipament = equip
   }
   
-  def getEquipament() : Equipament = this.equipament
+  def getEquipament() : Option[Equipament] = 
+    {
+      if(equipament.isDefined)this.equipament else None
+    }
   
   def Heal(heal : Int) =
   {
     health = health + heal
   }
+  
+  def getItems() : List[Item] = this.items
 }
 
 object PlayerCharacter {
