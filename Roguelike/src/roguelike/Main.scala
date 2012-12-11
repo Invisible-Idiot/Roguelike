@@ -15,6 +15,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     while(true) {
       val drawing = Dungeon.draw()
+      println(drawing)
       val input = Console.in.read.toChar
       Dungeon.update(input)
     }

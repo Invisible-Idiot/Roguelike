@@ -28,38 +28,44 @@ case object Up extends Direction
 case object Down extends Direction
 
 abstract class Area {
-  def hasPlayer : Boolean
+  protected var playerCharacter : Option[PlayerCharacter]
+  
+  final def hasPlayer : Boolean = !playerCharacter.isEmpty
+  
   def draw(canvas : Array[Array[Char]]) : Unit
-  def tick(direction : Direction) : Unit
+  def tick() : Unit
   def move(direction : Direction) : Unit
   def enter(playerCharacter : PlayerCharacter, entrance : (Int, Int)) : Unit
 }
 
 class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
-  private val map : Array[Array[Element]] = Array.ofDim(height, width)
-  private var playerCharacter : Option[PlayerCharacter] = None
+  private val map : Array[Array[Element]] = Array.fill(height, width)(Space)
+  protected var playerCharacter : Option[PlayerCharacter] = None
   private var playerPosition : (Int, Int) = (-1, -1)
   private var monsters : Map[(Int, Int), Monster] = populate(height, width)
-  private var doors : Map[(Int, Int), (Direction, Tunnel)] = Map()
+  private var doors : Map[(Int, Int), Tunnel] = Map()
   
   def chooseSpot(direction : Direction) : (Int, Int) = direction match {
-    case Left => (RNG.randInt(top, height), 0)
-    case Right => (RNG.randInt(top, height), width - 1)
-    case Up => (0, RNG.randInt(left, width))
-    case Down => (height - 1, RNG.randInt(left, width))
+    case Left => (RNG.randInt(top, height), left - 1)
+    case Right => (RNG.randInt(top, height), left + width)
+    case Up => (top - 1, RNG.randInt(left, width))
+    case Down => (top + height, RNG.randInt(left, width))
   }
   
-  def digTunnel(entrance : (Int, Int), direction : Direction, tunnel : Tunnel) =
-    doors += (entrance -> (direction, tunnel))
+  def digTunnel(entrance : (Int, Int), tunnel : Tunnel) = {
+    doors += (toLocal(entrance) -> tunnel)
+  }
   
-  def hasPlayer : Boolean = playerCharacter.isEmpty
+  def insertPlayer(pc : PlayerCharacter) = {
+    playerCharacter = Some(pc)
+    playerPosition = (RNG.randInt(0, height), RNG.randInt(0, width))
+  }
   
   def draw(canvas : Array[Array[Char]]) = {
     drawWalls(canvas)
     
     if(!playerCharacter.isEmpty) {
       drawFloor(canvas)
-      //drawDoors(canvas)
       drawPlayerCharacter(canvas)
       drawMonsters(canvas)
     }
@@ -96,7 +102,7 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   */
   def drawPlayerCharacter(canvas : Array[Array[Char]]) = {
     playerCharacter.foreach { pc : PlayerCharacter =>
-      canvas(playerPosition._1)(playerPosition._2) = pc.toChar
+      canvas(playerPosition._1 + top)(playerPosition._2 + left) = pc.toChar
     }
   }
   
@@ -110,15 +116,18 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
     Map()
   }
   
-  def tick(direction : Direction) = {
-    move(direction)
+  def tick() = {
   }
   
   def move(direction : Direction) = {
+    playerCharacter.foreach(move(_, direction))
+  }
+  
+  private def move(player : PlayerCharacter, direction : Direction) = {
     val newPlayerPosition = direction.movement(playerPosition._1, playerPosition._2)
     
     monsters.get(newPlayerPosition) match {
-      case Some(monster) => playerCharacter.foreach(_.attack(monster))
+      case Some(monster) => player.attack(monster)
       case None => moveTo(newPlayerPosition, direction)
     }
   }
@@ -128,11 +137,11 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
       playerPosition = newPlayerPosition
       step(newPlayerPosition)
     }
-    else doors.get(playerPosition) match {
-      case Some((entranceDirection, tunnel)) =>
-        if(movementDirection == entranceDirection) {
+    else doors.get(newPlayerPosition) match {
+      case Some(tunnel) => {
+        //if(movementDirection == entranceDirection) {
           playerCharacter foreach {
-            tunnel.enter(_, movementDirection.movement(playerPosition._1 + top, playerPosition._2 + left))
+            tunnel.enter(_, toGlobal(newPlayerPosition))
           }
           playerCharacter = None
         }
@@ -158,26 +167,35 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   }
   
   private def toGlobal(coordinates : (Int, Int)) = (coordinates._1 + top, coordinates._2 + left)
+  private def toLocal(coordinates : (Int, Int)) = (coordinates._1 - top, coordinates._2 - left)
   
   def enter(playerCharacter : PlayerCharacter, entrance : (Int, Int)) = {
     this.playerCharacter = Some(playerCharacter)
-    
-    doors.get(entrance) match {
-      case Some(_) => playerPosition = entrance
+    playerPosition = (entrance._1 - top, entrance._2 - left)
+    /*
+    doors.get(localCoordinates) match {
+      case Some(_) => playerPosition = localCoordinates
       case None => throw new Exception("Assertion Failure: Player entered room from invalid entrance")
     }
+    */
   }
 }
 
-class Tunnel(start : (Int, Int), end : (Int, Int), startRoom : Room, endRoom : Room, corner : Int, startsHorizontal : Boolean) extends Area {
-  private var playerCharacter : Option[PlayerCharacter] = None
+class Tunnel(start : (Int, Int), end : (Int, Int), startRoom : Room, endRoom : Room, startsHorizontal : Boolean) extends Area {
+  protected var playerCharacter : Option[PlayerCharacter] = None
+  private val corner = 
+    if(startsHorizontal)
+      RNG.randInt(1, end._2 - start._2 - 1)
+    else
+      RNG.randInt(1, end._1 - start._1 - 1)
+  
   private val path : Tape[(Direction, Direction)] = makePath()
   private val doorChar = '0'
+  private val floorChar = '#'
   
-  def hasPlayer : Boolean = playerCharacter.isEmpty
-  
-  def draw(canvas : Array[Array[Char]]) : Unit = {
-    var counter = start
+  def draw(canvas : Array[Array[Char]]) = {
+    /*var counter = start
+    
     val drawTunnel = (degreeOfFreedom : (Direction, Direction)) => {
       canvas(counter._1)(counter._2) = '#'
       counter = degreeOfFreedom._2.movement(counter._1, counter._2)
@@ -185,18 +203,38 @@ class Tunnel(start : (Int, Int), end : (Int, Int), startRoom : Room, endRoom : R
     val drawPlayer = (degreeOfFreedom : (Direction, Direction)) => {
       canvas(counter._1)(counter._2) = PlayerCharacter.toChar
       counter = degreeOfFreedom._2.movement(counter._1, counter._2)
+    }*/
+    
+    val currentPosition = path.headPosition
+    val list = path.toList
+    val playerCharOrElse = (default : Char) => (counter : Int) =>
+      if (!playerCharacter.isEmpty && counter == currentPosition)
+        PlayerCharacter.toChar
+      else
+        default
+      
+    def drawLoop(cursor : (Int, Int), counter : Int, list : List[(Direction, Direction)]) : Unit = {
+      list match {
+        case Nil => throw new Exception("Assertion Failure: Path was empty")
+        case degreeOfFreedom :: Nil => canvas(cursor._1)(cursor._2) = playerCharOrElse(doorChar)(counter)
+        case degreeOfFreedom :: rest => {
+            val default = if (counter == 0) doorChar else floorChar
+            canvas(cursor._1)(cursor._2) = playerCharOrElse(default)(counter)
+            drawLoop(degreeOfFreedom._2.movement(cursor._1, cursor._2), counter + 1, rest)
+        }
+      }
     }
     
-    path.foreachLeft(drawTunnel)
-    if(playerCharacter.isEmpty) path.forHead(drawTunnel) else path.forHead(drawPlayer)
-    path.foreachRight(drawTunnel)
+    drawLoop(start, 0, list)
+    //path.foreachLeft(drawTunnel)
+    //if(playerCharacter.isEmpty) path.forHead(drawTunnel) else path.forHead(drawPlayer)
+    //path.foreachRight(drawTunnel)
     
-    canvas(start._1)(start._2) = doorChar
-    canvas(end._1)(end._2) = doorChar
+    //canvas(start._1)(start._2) = doorChar
+    //canvas(end._1)(end._2) = doorChar
   }
   
-  def tick(direction : Direction) : Unit = {
-    move(direction)
+  def tick() : Unit = {
   }
   
   def move(direction : Direction) : Unit = {
@@ -204,7 +242,7 @@ class Tunnel(start : (Int, Int), end : (Int, Int), startRoom : Room, endRoom : R
       val moved = path.moveLeft()
       
       if(!moved) {
-        playerCharacter foreach { startRoom.enter(_, start) }
+        playerCharacter foreach { startRoom.enter(_, direction.movement(start._1, start._2)) }
         playerCharacter = None
       }
     }
@@ -212,10 +250,9 @@ class Tunnel(start : (Int, Int), end : (Int, Int), startRoom : Room, endRoom : R
       val moved = path.moveRight()
       
       if(!moved) {
-        playerCharacter foreach { startRoom.enter(_, end) }
+        playerCharacter foreach { endRoom.enter(_, direction.movement(end._1, end._2)) }
         playerCharacter = None
       }
-      
     }
   }
   
@@ -223,9 +260,9 @@ class Tunnel(start : (Int, Int), end : (Int, Int), startRoom : Room, endRoom : R
     this.playerCharacter = Some(playerCharacter)
     
     if(entrance == start)
-      path.moveToBeginning
+      path.moveToBeginning()
     else if(entrance == end)
-      path.moveToEnd
+      path.moveToEnd()
     else
       throw new Exception("Assertion Failure: Player entered tunnel from invalid entrance")
   }
@@ -239,9 +276,16 @@ class Tunnel(start : (Int, Int), end : (Int, Int), startRoom : Room, endRoom : R
     var list : List[(Direction, Direction)] = List()
     
     for(i <- 0 until corner) list = (firstDirection.inverse, firstDirection) :: list
-    list = (firstDirection, secondDirection) :: list
-    for(i <- 0 to (cornerLength - 2)) list = (secondDirection.inverse, secondDirection) :: list
-    list = (secondDirection.inverse, firstDirection) :: list
+    
+    for(i <- 0 to cornerLength) {
+      if(i == 0)
+        list = (firstDirection.inverse, if(cornerLength == 0) firstDirection else secondDirection) :: list
+      else if(i < cornerLength)
+        list = (secondDirection.inverse, secondDirection) :: list
+      else
+        list = (secondDirection.inverse, firstDirection) :: list
+    }
+    
     for(i <- 0 until rest) list = (firstDirection.inverse, firstDirection) :: list
     
     return list.reverse match {

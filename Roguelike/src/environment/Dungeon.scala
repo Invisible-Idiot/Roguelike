@@ -2,19 +2,24 @@ package environment
 
 import roguelike.RNG
 import collection.mutable.ArrayBuffer
+import elements._
 
 object Dungeon {
-  val height = 70
+  val height = 20
   val width = 70
+  val minRoomHeight = 2
+  val minRoomWidth = 9
+  val minPartitionHeight = minRoomHeight + 2
+  val minPartitionWidth = minRoomWidth + 2
   var rooms : List[Room] = List()
   var tunnels : List[Tunnel] = List()
   generate()
   
   private def generate() = {
-    val hBisection2 = RNG.randInt(6, height - 3)
-    val hBisection1 = RNG.randInt(3, hBisection2 - 3)
-    val vBisection2 = RNG.randInt(6, width - 3)
-    val vBisection1 = RNG.randInt(3, vBisection2 - 3)
+    val hBisection2 = RNG.randInt(minPartitionHeight * 2, height - minPartitionHeight * 3)
+    val hBisection1 = RNG.randInt(minPartitionHeight, hBisection2 - minPartitionHeight * 2)
+    val vBisection2 = RNG.randInt(minPartitionWidth * 2, width - minPartitionWidth * 3)
+    val vBisection1 = RNG.randInt(minPartitionWidth, vBisection2 - minPartitionWidth * 2)
     val partitionMap : Array[Array[Partition]] = Array.ofDim(3, 3)
     
     partitionMap(0)(0) = Partition(0, 0, hBisection1, vBisection1)
@@ -82,13 +87,21 @@ object Dungeon {
           for(r1 <- room1; r2 <- room2) tunnels = digVerticalTunnel(r1, r2) :: tunnels
       }
     }
+    
+    insertPlayer()
+  }
+  
+  private def insertPlayer() = {
+    val roomIndex = RNG.randInt(0, rooms.length)
+    val chosenRoom = rooms(roomIndex)
+    chosenRoom.insertPlayer(new PlayerCharacter())
   }
   
   private def buildRoom(partition : Partition) : Room = {
-    val top = RNG.randInt(partition.top + 1, partition.height - 3)
-    val left = RNG.randInt(partition.left + 1, partition.width - 3)
-    val height = RNG.randInt(1, partition.top + partition.height - top - 2)
-    val width = RNG.randInt(1, partition.left + partition.width - left - 2)
+    val top = RNG.randInt(partition.top + 1, partition.height - minPartitionHeight)
+    val left = RNG.randInt(partition.left + 1, partition.width - minPartitionWidth)
+    val height = RNG.randInt(minRoomHeight, partition.top + partition.height - top - 2)
+    val width = RNG.randInt(minRoomWidth, partition.left + partition.width - left - 2)
     
     return new Room(top, left, height, width)
   }
@@ -96,20 +109,18 @@ object Dungeon {
   private def digHorizontalTunnel(room1 : Room, room2 : Room) : Tunnel = {
     val entrance1 = room1.chooseSpot(Right)
     val entrance2 = room2.chooseSpot(Left)
-    val corner = RNG.randInt(1, entrance2._2 - entrance1._2)
-    val tunnel = new Tunnel(entrance1, entrance2, room1, room2, corner, true)
-    room1.digTunnel(entrance1, Right, tunnel)
-    room2.digTunnel(entrance2, Left, tunnel)
+    val tunnel = new Tunnel(entrance1, entrance2, room1, room2, true)
+    room1.digTunnel(entrance1, tunnel)
+    room2.digTunnel(entrance2, tunnel)
     return tunnel
   }
   
   private def digVerticalTunnel(room1 : Room, room2 : Room) : Tunnel = {
     val entrance1 = room1.chooseSpot(Down)
     val entrance2 = room2.chooseSpot(Up)
-    val corner = RNG.randInt(1, entrance2._1 - entrance1._1)
-    val tunnel = new Tunnel(entrance1, entrance2, room1, room2, corner, false)
-    room1.digTunnel(entrance1, Down, tunnel)
-    room2.digTunnel(entrance2, Up, tunnel)
+    val tunnel = new Tunnel(entrance1, entrance2, room1, room2, false)
+    room1.digTunnel(entrance1, tunnel)
+    room2.digTunnel(entrance2, tunnel)
     return tunnel
   }
   
@@ -121,8 +132,8 @@ object Dungeon {
     
     val drawing = new StringBuilder()
     
-    for(i <- 0 to height) {
-      for(j <- 0 to width) {
+    for(i <- 0 until height) {
+      for(j <- 0 until width) {
         drawing += canvas(i)(j)
       }
       
@@ -132,25 +143,35 @@ object Dungeon {
     return drawing.mkString
   }
   
-  def update(input : Char) = input match {
-    case 'w' => move(Up)
-    case 'a' => move(Left)
-    case 's' => move(Down)
-    case 'd' => move(Right)
-    case _ => {}
+  def update(input : Char) = {
+    input match {
+      case 'w' => move(Up)
+      case 'a' => move(Left)
+      case 's' => move(Down)
+      case 'd' => move(Right)
+      case _ => {}
+    }
+    tick()
+  } 
+  
+  private def move(direction : Direction) = {
+    forPlayerCharacter(_.move(direction))
   }
   
-  private def move(direction : Direction) = forPlayerCharacter(_.move(direction))
+  private def tick() = {
+    rooms.foreach(_.tick())
+    tunnels.foreach(_.tick())
+  }
   
   private def forPlayerCharacter[T](action : Area => T) = {
-    def lookInTunnels(list : List[Tunnel])(action : Area => T) : Unit = list match {
-      case Nil => {}
-      case h :: t => if(!h.hasPlayer) lookInTunnels(t)(action) else action(h)
-    }
-    
     def lookInRooms(list : List[Room])(action : Area => T) : Unit = list match {
       case Nil => lookInTunnels(tunnels)(action)
       case h :: t => if(!h.hasPlayer) lookInRooms(t)(action) else action(h)
+    }
+    
+    def lookInTunnels(list : List[Tunnel])(action : Area => T) : Unit = list match {
+      case Nil => {}
+      case h :: t => if(!h.hasPlayer) lookInTunnels(t)(action) else action(h)
     }
     
     lookInRooms(rooms)(action)

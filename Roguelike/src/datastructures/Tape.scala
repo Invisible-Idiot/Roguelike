@@ -34,29 +34,53 @@ class Tape[T] (private val hd : T, private val tl : List[T]) {
     }
   }
   
-  def moveToBeginning() = {
-    right ::= head
-    right = left.foldLeft(right)((r, x) => x :: r)
+  def moveToBeginning() : Unit = {
+    def move() : Unit =
+      left match {
+        case Nil => {}
+        case h :: Nil => {
+            left = Nil
+            head = h
+        }
+        case h :: rest => {
+            right ::= h
+            left = rest
+            move()
+        }
+      }
+    
+    if(!left.isEmpty) {
+      right ::= head
+      move()
+    }
   }
   
-  def moveToEnd() = {
-    left ::= head
-    left = right.foldLeft(left)((l, x) => x :: l)
+  def moveToEnd() : Unit = {
+    def move() : Unit =
+      right match {
+        case Nil => {}
+        case h :: Nil => {
+            right = Nil
+            head = h
+        }
+        case h :: rest => {
+            left ::= h
+            right = rest
+            move()
+        }
+      }
+    
+    if(!right.isEmpty) {
+      left ::= head
+      move()
+    }
   }
   
   def read() : T = head
   
-  def foreach[B](proc : T => B) : Unit = {
-    foreachLeft(proc)
-    forHead(proc)
-    foreachRight(proc)
-  }
+  def headPosition : Int = left.length
   
-  def foreachLeft[B](proc : T => B) : Unit = left.reverse.foreach(proc)
-  
-  def forHead[B](proc : T => B) : Unit = proc(head)
-  
-  def foreachRight[B](proc : T => B) : Unit = right.foreach(proc)
+  def toList : List[T] = left.reverse ++ (head :: right)
 }
 
 object Tape {

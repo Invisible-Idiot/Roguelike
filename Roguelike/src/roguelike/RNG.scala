@@ -8,8 +8,8 @@ package roguelike
 import util.Random
 
 object RNG {
-  val rand = new Random(11111111)
+  private val rand = new Random(11111111)//)//
   
-  def randInt(start : Int, count : Int) : Int =
-    if(count == 0) start else rand.nextInt(count) + start
+  def randInt(start : Int, range : Int) : Int =
+    if(range == 0) start else rand.nextInt(range) + start
 }
