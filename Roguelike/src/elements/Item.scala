@@ -8,7 +8,7 @@ package elements
 
 
 
-sealed abstract class Item {
+sealed abstract class Item extends Element{
   def Use(playerCharacter : PlayerCharacter) = this match
   {
     case equipament : Equipament => equipament.Equip(playerCharacter)
@@ -35,3 +35,6 @@ case class Consumable(heal : Int) extends Item
     playerCharacter.Heal(heal)
   }
 }
+
+
+object Item {}

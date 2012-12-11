@@ -11,6 +11,7 @@ class PlayerCharacter {
   var health : Int = 100
   var attackDamage : Int = 0
   var equipament : Equipament
+  
   def pickUp(item : Item) =  
   {
     items = items.+(item)

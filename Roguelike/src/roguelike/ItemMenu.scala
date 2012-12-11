@@ -24,7 +24,7 @@ class ItemMenu(_items : List[Item]) {
   
   def SelectDown()
   {
-    if(selected < items.lenght)
+    if(selected < items.length)
       selected = selected + 1;
     else
       selected = 0;
@@ -34,7 +34,7 @@ class ItemMenu(_items : List[Item]) {
   def toString() : String = 
   {
     var retvalue : String = ""
-    for(a : Int <- 0 until items.lenght - 1)
+    for(a : Int <- 0 until items.length - 1)
     {
       if(a != selected)
         retvalue = retvalue + items.apply(a).toString() + "\n"

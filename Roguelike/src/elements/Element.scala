@@ -5,7 +5,7 @@
 
 package elements
 
-sealed abstract class Element {
+abstract class Element {
   def toChar : Char =
     this match {
       case Space => '.'
@@ -13,6 +13,8 @@ sealed abstract class Element {
       case Trap() => '.'
       case DeactivatedTrap() => '^'
       case Gold => '*'
+      case e : Consumable => '&'
+      case e : Equipament => '+'
     }
 }
 
@@ -24,5 +26,5 @@ sealed case class Trap() extends Element {
 }
 sealed case class DeactivatedTrap() extends Element
 case object Gold extends Element
-case class Item extends Element
+//case class Item extends Element
 

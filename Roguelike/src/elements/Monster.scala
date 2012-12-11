@@ -5,10 +5,13 @@
 
 package elements
 
-sealed abstract class Monster(damage : Int, health : Int) {
-  def toChar = this match{
-    case MonsterA => 'A'
-    case MonsterB => 'B'
+sealed abstract class Monster(_damage : Int, _health : Int) {
+  var damage : Int = _damage
+  var health : Int = _health
+
+      def toChar = this match{
+      case a : MonsterA => 'A'
+      case b : MonsterB => 'B'
   }
   
   def attack(victim : PlayerCharacter)
@@ -27,6 +30,9 @@ sealed abstract class Monster(damage : Int, health : Int) {
   }
 }
 
+object Monster{
 
-case class MonsterA extends Monster
-case class MonsterB extends Monster
+}
+
+case class MonsterA() extends Monster(5,10) {}
+case class MonsterB() extends Monster(2,25) {}
