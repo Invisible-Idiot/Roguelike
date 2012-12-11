@@ -116,8 +116,7 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
     Map()
   }
   
-  def tick() = {
-  }
+  def tick() = monsters map((a : ((Int,Int),Monster)) => (a._2.move(playerPosition,a._1),a._2))
   
   def move(direction : Direction) = {
     playerCharacter.foreach(move(_, direction))
