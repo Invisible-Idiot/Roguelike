@@ -24,7 +24,9 @@ case class Equipament(damage : Int) extends Item
       var oldEquip : Equipament  = playerCharacter.getEquipament()
       playerCharacter.setEquipament(this)
       return oldEquip
+      
   }
+  def getDamage() : Int = this.damage
 }
 case class Consumable(heal : Int) extends Item
 {
