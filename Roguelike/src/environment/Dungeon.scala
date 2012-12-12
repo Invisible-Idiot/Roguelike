@@ -9,8 +9,8 @@ object Dungeon {
   val width = 70
   val minRoomHeight = 2
   val minRoomWidth = 9
-  val minPartitionHeight = minRoomHeight + 2
-  val minPartitionWidth = minRoomWidth + 2
+  val minPartitionHeight = minRoomHeight + 3
+  val minPartitionWidth = minRoomWidth + 3
   var rooms : List[Room] = List()
   var tunnels : List[Tunnel] = List()
   generate()
@@ -98,10 +98,10 @@ object Dungeon {
   }
   
   private def buildRoom(partition : Partition) : Room = {
-    val top = RNG.randInt(partition.top + 1, partition.height - minPartitionHeight)
-    val left = RNG.randInt(partition.left + 1, partition.width - minPartitionWidth)
-    val height = RNG.randInt(minRoomHeight, partition.top + partition.height - top - 2)
-    val width = RNG.randInt(minRoomWidth, partition.left + partition.width - left - 2)
+    val top = partition.top + RNG.randInt(1, partition.height - minRoomHeight - 2)
+    val left = partition.left + RNG.randInt(1, partition.width - minRoomWidth - 2)
+    val height = RNG.randIntBetween(minRoomHeight, partition.top + partition.height - top - 1)
+    val width = RNG.randIntBetween(minRoomWidth, partition.left + partition.width - left - 1)
     
     return new Room(top, left, height, width)
   }
