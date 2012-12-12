@@ -15,7 +15,7 @@ sealed abstract class Monster(_damage : Int, _health : Int) {
       case b : MonsterB => 'B'
   }
   
-  def attack(victim : PlayerCharacter)
+  def attack(victim : PlayerCharacter) : Boolean = 
   {
     victim.sufferDamage(damage)    
   }
@@ -32,27 +32,45 @@ sealed abstract class Monster(_damage : Int, _health : Int) {
   
   def move(enemyPosition : (Int,Int), myPosition : (Int,Int)) : (Int,Int) =
     {
+      var retvalue : (Int,Int) = (0,0)
+      if(
+        myPosition._1 == enemyPosition._1 + 1 && myPosition._2 == enemyPosition._1 ||
+        myPosition._1 == enemyPosition._1 - 1 && myPosition._2 == enemyPosition._1 ||
+        myPosition._1 == enemyPosition._1 && myPosition._2 == enemyPosition._2 + 1 ||
+        myPosition._1 == enemyPosition._1 && myPosition._2 == enemyPosition._2 - 1 ||
+        myPosition._1 == enemyPosition._1 + 1 && myPosition._2 == enemyPosition._1 + 1 ||
+        myPosition._1 == enemyPosition._1 - 1 && myPosition._2 == enemyPosition._1 + 1 ||
+        myPosition._1 == enemyPosition._1 + 1 && myPosition._2 == enemyPosition._2 - 1 ||
+        myPosition._1 == enemyPosition._1 - 1 && myPosition._2 == enemyPosition._2 - 1) {println("DANO");return(myPosition)}
+
+      println("")
+      retvalue = (0,1)
       if(enemyPosition._1 == myPosition._1)
         if(enemyPosition._2 > myPosition._2)
-          return (0,1)
+          retvalue = (0,1)
         else if(enemyPosition._2 == myPosition._2)
-          return (0,0)
+          retvalue = (1,0)
         else
-          return (0,-1)
+          retvalue = (0,-1)
       else if(enemyPosition._1 > myPosition._1)
           if(enemyPosition._2 > myPosition._2)
-            return(1,1)
+            retvalue = (1,1)
           else if(enemyPosition._2 == myPosition._2)
-            return(1,0)
+            retvalue = (1,0)
           else
-            return(1,-1)
+            retvalue = (1,-1)
        else
           if(enemyPosition._2 > myPosition._2)
-            return(-1,1)
+            retvalue = (-1,1)
           else if(enemyPosition._2 == myPosition._2)
-            return(-1,0)
+            retvalue = (-1,0)
           else
-            return(-1,-1)
+            retvalue = (-1,-1)
+          
+        //println(retvalue)
+        //println(enemyPosition)
+        //println((myPosition._1 + retvalue._1,myPosition._2 + retvalue._2))
+        return (myPosition._1 + retvalue._1,myPosition._2 + retvalue._2)
     }
    
   override def toString : String = this match {

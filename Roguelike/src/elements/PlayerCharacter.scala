@@ -9,7 +9,7 @@ class PlayerCharacter {
   def toChar : Char = PlayerCharacter.toChar
   private var items : List[Item] = List()
   private var health : Int = 100
-  private var attackDamage : Int = 0
+  private var attackDamage : Int = 5
   private var equipament : Option[Equipament] = None
   
   def pickUp(item : Item) =  
@@ -26,7 +26,7 @@ class PlayerCharacter {
         return false
   }
   
-  def attack(monster : Monster) = 
+  def attack(monster : Monster) : Boolean = 
   {
     if(equipament.isDefined)
       monster.sufferDamage(attackDamage + equipament.get.getDamage)

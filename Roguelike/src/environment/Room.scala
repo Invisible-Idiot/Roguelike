@@ -114,7 +114,9 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   
   def drawMonsters(canvas : Array[Array[Char]]) = {
     for(((i, j), monster) <- monsters) {
-      canvas(i)(j) = monster.toChar
+      canvas(i+1)(j+3) = monster.toChar
+      //println(playerPosition)
+      //println((i,j))
     }
   }
   
@@ -123,10 +125,12 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
     (0 to numberOfMonsters).map(_ => randomPosition() -> Monster.randomMonster).toMap
   }
   
-  private def randomPosition() : (Int, Int) = (RNG.randInt(top, height), RNG.randInt(left, width))
+  private def randomPosition() : (Int, Int) = (RNG.randInt(0, height), RNG.randInt(0, width))
   
   def tick() = {
-    monsters map((a : ((Int,Int),Monster)) => (a._2.move(playerPosition, a._1), a._2))
+    if(playerCharacter != None)
+      monsters = monsters.map((a : ((Int,Int),Monster)) => (a._2.move(playerPosition, a._1), a._2))
+
   }
   
   def move(direction : Direction) = {
@@ -136,13 +140,13 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   private def move(player : PlayerCharacter, direction : Direction) = {
     val newPlayerPosition = direction.movement(playerPosition._1, playerPosition._2)
     
-    monsters.get(newPlayerPosition) match {
+    if((monsters.get(newPlayerPosition) match {
       case Some(monster) => player.attack(monster)
-      case None => moveTo(newPlayerPosition, direction)
-    }
+      case None => moveTo(newPlayerPosition, direction)})==true)
+        monsters-=newPlayerPosition
   }
   
-  private def moveTo(newPlayerPosition : (Int, Int), movementDirection : Direction) = {
+  private def moveTo(newPlayerPosition : (Int, Int), movementDirection : Direction) : Boolean= {
     if(inLimits(newPlayerPosition)) {
       playerPosition = newPlayerPosition
       step(newPlayerPosition)
@@ -157,6 +161,7 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
         }
       case None => {}
     }
+    return false
   }
   
   private def inLimits(position : (Int, Int)) : Boolean = {
@@ -171,6 +176,7 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
         playerCharacter.foreach(trap.spring(_))
         map(i)(j) = trap.deactivate
       }
+    
       case item : Item => playerCharacter.foreach(_.pickUp(item))
       case _ => {}
     }
