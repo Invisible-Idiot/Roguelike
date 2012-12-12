@@ -4,15 +4,16 @@ import roguelike.RNG
 import collection.mutable.ArrayBuffer
 import elements._
 
-object Dungeon {
+class Dungeon() {
   val height = 20
   val width = 70
   val minRoomHeight = 2
   val minRoomWidth = 9
   val minPartitionHeight = minRoomHeight + 3
   val minPartitionWidth = minRoomWidth + 3
-  var rooms : List[Room] = List()
-  var tunnels : List[Tunnel] = List()
+  var areas : List[Area] = List()
+  //var rooms : List[Room] = List()
+  //var tunnels : List[Tunnel] = List()
   generate()
   
   private def generate() = {
@@ -54,7 +55,7 @@ object Dungeon {
     
     for(i <- 0 to 2; j <- 0 to 2) roomMap(i)(j) match {
       case Some(room) => {
-          rooms = room :: rooms
+          areas = room :: areas//rooms = room :: rooms
           
           ((i + 1) to 2) find {
             k : Int => !roomMap(k)(j).isEmpty
@@ -79,12 +80,12 @@ object Dungeon {
       case HorizontalConnection(i, j1, j2) => {
           val room1 = roomMap(i)(j1)
           val room2 = roomMap(i)(j2)
-          for(r1 <- room1; r2 <- room2) tunnels = digHorizontalTunnel(r1, r2) :: tunnels
+          for(r1 <- room1; r2 <- room2) areas = digHorizontalTunnel(r1, r2) :: areas//tunnels = digHorizontalTunnel(r1, r2) :: tunnels
       }
       case VerticalConnection(i1, i2, j) => {
           val room1 = roomMap(i1)(j)
           val room2 = roomMap(i2)(j)
-          for(r1 <- room1; r2 <- room2) tunnels = digVerticalTunnel(r1, r2) :: tunnels
+          for(r1 <- room1; r2 <- room2) areas = digVerticalTunnel(r1, r2) :: areas//tunnels = digVerticalTunnel(r1, r2) :: tunnels
       }
     }
     
@@ -92,9 +93,12 @@ object Dungeon {
   }
   
   private def insertPlayer() = {
-    val roomIndex = RNG.randInt(0, rooms.length)
-    val chosenRoom = rooms(roomIndex)
-    chosenRoom.insertPlayer(new PlayerCharacter())
+    val areaIndex = RNG.randInt(0, areas.length)
+    
+    areas(areaIndex) match {
+      case room : Room => room.insertPlayer(new PlayerCharacter())
+      case tunnel : Tunnel => tunnel.startRoom.insertPlayer(new PlayerCharacter())
+    }
   }
   
   private def buildRoom(partition : Partition) : Room = {
@@ -127,8 +131,7 @@ object Dungeon {
   def draw() : String = {
     val canvas = Array.fill(height, width)(' ')
     
-    for(room <- rooms) room.draw(canvas)
-    for(tunnel <- tunnels) tunnel.draw(canvas)
+    for(area <- areas) area.draw(canvas)
     
     val drawing = new StringBuilder()
     
@@ -143,37 +146,20 @@ object Dungeon {
     return drawing.mkString
   }
   
-  def update(input : Char) = {
-    input match {
-      case 'w' => move(Up)
-      case 'a' => move(Left)
-      case 's' => move(Down)
-      case 'd' => move(Right)
-      case _ => {}
-    }
-    tick()
-  } 
-  
-  private def move(direction : Direction) = {
+  def move(direction : Direction) = {
     forPlayerCharacter(_.move(direction))
   }
   
-  private def tick() = {
-    rooms.foreach(_.tick())
-    tunnels.foreach(_.tick())
+  def tick() : Unit = {
+    areas.map(_.tick())
   }
   
-  private def forPlayerCharacter[T](action : Area => T) = {
-    def lookInRooms(list : List[Room])(action : Area => T) : Unit = list match {
-      case Nil => lookInTunnels(tunnels)(action)
-      case h :: t => if(!h.hasPlayer) lookInRooms(t)(action) else action(h)
+  private def forPlayerCharacter[T](action : Area => T) : T = {
+    def lookForPlayerCharacter(list : List[Area])(action : Area => T) : T = list match {
+      case Nil => throw new Exception("Assertion Failure: Can't find player")
+      case h :: t => if(!h.hasPlayer) lookForPlayerCharacter(t)(action) else action(h)
     }
     
-    def lookInTunnels(list : List[Tunnel])(action : Area => T) : Unit = list match {
-      case Nil => {}
-      case h :: t => if(!h.hasPlayer) lookInTunnels(t)(action) else action(h)
-    }
-    
-    lookInRooms(rooms)(action)
+    lookForPlayerCharacter(areas)(action)
   }
 }

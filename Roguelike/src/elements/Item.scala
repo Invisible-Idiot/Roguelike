@@ -35,6 +35,3 @@ case class Consumable(heal : Int) extends Item
     playerCharacter.Heal(heal)
   }
 }
-
-
-object Item {}

@@ -5,8 +5,6 @@
 
 package roguelike
 
-import environment.Dungeon
-
 object Main {
 
   /**
@@ -14,10 +12,9 @@ object Main {
    */
   def main(args: Array[String]): Unit = {
     while(true) {
-      val drawing = Dungeon.draw()
-      println(drawing)
-      val input = Console.in.read.toChar
-      Dungeon.update(input)
+      println(Game.draw())
+      val input = Console.in.read.toChar//System.console().reader().read.toChar//
+      Game.update(input)
     }
   }
 

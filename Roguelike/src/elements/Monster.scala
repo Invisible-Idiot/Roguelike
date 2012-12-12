@@ -4,12 +4,13 @@
  */
 
 package elements
+import roguelike.RNG
 
 sealed abstract class Monster(_damage : Int, _health : Int) {
   private var damage : Int = _damage
   private var health : Int = _health
 
-      def toChar = this match{
+  def toChar = this match {
       case a : MonsterA => 'A'
       case b : MonsterB => 'B'
   }
@@ -51,16 +52,21 @@ sealed abstract class Monster(_damage : Int, _health : Int) {
           else if(enemyPosition._2 == myPosition._2)
             return(-1,0)
           else
-            return(-1,-1)         
-            
-        
+            return(-1,-1)
     }
-  
+   
+  override def toString : String = this match {
+    case a : MonsterA => "A"
+    case b : MonsterB => "B"
+  }
 }
 
 object Monster{
-
+  def randomMonster : Monster = RNG.randInt(0,2) match {
+    case 0 => new MonsterA()
+    case _ => new MonsterB()
+  }
 }
 
-case class MonsterA() extends Monster(5,10) {}
-case class MonsterB() extends Monster(2,25) {}
+class MonsterA() extends Monster(5,10) {}
+class MonsterB() extends Monster(2,25) {}

@@ -5,13 +5,14 @@
 
 package roguelike
 import elements._
+
 class ItemMenu(_items : List[Item]) {
   var selected : Int = 0
   var items : List[Item] = _items
   
   def UseSelected(playerCharacter : PlayerCharacter)
   {
-    items.apply(selected).Use(playerCharacter)
+    items(selected).Use(playerCharacter)
   }
   
   def SelectUp()
@@ -37,9 +38,9 @@ class ItemMenu(_items : List[Item]) {
     for(a : Int <- 0 until items.length - 1)
     {
       if(a != selected)
-        retvalue = retvalue + items.apply(a).toString() + "\n"
+        retvalue = retvalue + items(a).toString() + "\n"
       else
-        retvalue = retvalue + ">" + items.apply(a).toString() + "\n"
+        retvalue = retvalue + ">" + items(a).toString() + "\n"
     }
     return retvalue
   }
