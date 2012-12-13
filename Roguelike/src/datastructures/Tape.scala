@@ -80,7 +80,15 @@ class Tape[T] (private val hd : T, private val tl : List[T]) {
   
   def headPosition : Int = left.length
   
-  def toList : List[T] = left.reverse ++ (head :: right)
+  def toList : List[T] = {
+    def accumulate(left : List[T], rest : List[T]) : List[T] =
+      left match {
+        case Nil => rest
+        case hd :: tl => accumulate(tl, hd :: rest)
+      }
+    
+    accumulate(left, head :: right)
+  }
 }
 
 object Tape {

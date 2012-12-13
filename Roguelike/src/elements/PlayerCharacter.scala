@@ -18,14 +18,8 @@ class PlayerCharacter {
   
   def dataToString() : String =
     {
-      var retvalue : String = "Items = "
-      for(i : Item <- items)
-        retvalue = retvalue + i.toString() + ","
-      retvalue = retvalue + "; Health = " + health.toString()
+      var retvalue : String = "Health = " + health.toString()
       retvalue = retvalue + "; Attack Damage = " + attackDamage.toString()
-      retvalue = retvalue + "; Equipaments = "
-      for(i : Equipament <- equipament)
-        retvalue = retvalue + i.toString() + ","
       return retvalue
     }
   

@@ -37,7 +37,7 @@ sealed abstract class Area {
   def move(direction : Direction) : Unit
   def enter(playerCharacter : PlayerCharacter, entrance : (Int, Int)) : Unit
   
-  def message : String = playerCharacter.map{ _.applyEffects() }.getOrElse("")
+  def message : String = playerCharacter.map{ pc => pc.dataToString + "\n" + pc.applyEffects() }.getOrElse("")
 }
 
 object Area {
@@ -129,19 +129,7 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   
   def tick() = {
     for(pc <- playerCharacter) {
-      val updatedMonsters = monsters.map((a : ((Int,Int),Monster)) => (a._2.move(playerPosition, a._1), a._2))
-      
-      updatedMonsters.foreach { (a : ((Int,Int),Monster)) => if(a._1 == playerPosition) pc.receiveEffect(a._2.attack) }
-      
-      monsters = correctMonstersPosition(updatedMonsters.toList, monsters.toList, playerPosition).toMap
-    }
-  }
-  
-  def correctMonstersPosition(list : List[((Int, Int), Monster)], original : List[((Int, Int), Monster)], playerPosition : (Int, Int)) : List[((Int, Int), Monster)]= {
-    list match {
-      case Nil => Nil
-      case hd :: tl =>
-        (if(hd == playerPosition) original.head else hd) :: correctMonstersPosition(tl, original.tail, playerPosition)
+      monsters = monsters.map((a : ((Int,Int),Monster)) => (a._2.move(playerPosition, a._1, pc), a._2))
     }
   }
   
@@ -151,11 +139,11 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   
   private def move(player : PlayerCharacter, direction : Direction) = {
     val newPlayerPosition = direction.movement(playerPosition._1, playerPosition._2)
-    
+    /*
     if((monsters.get(newPlayerPosition) match {
       case Some(monster) => player.attack(monster)
       case None => moveTo(newPlayerPosition, direction)})==true)
-        monsters-=newPlayerPosition
+        monsters-=newPlayerPosition*/
   }
   
   private def moveTo(newPlayerPosition : (Int, Int), movementDirection : Direction) : Boolean= {
@@ -173,14 +161,6 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
       case None => {}
     }
     return false
-  }
-  
-  private def attack(monster : Monster)(player : PlayerCharacter) = {
-    
-  }
-  
-  private def attack(player : PlayerCharacter)(monster : Monster) = {
-    
   }
   
   private def inLimits(position : (Int, Int)) : Boolean = {
