@@ -8,7 +8,7 @@ package roguelike
 import util.Random
 
 object RNG {
-  private val rand = new Random(11111111)//)//6666666)//
+  private val rand = new Random(6666666)//11111111)//)//
   
   def randInt(start : Int, range : Int) : Int =
     if(range == 0) start else rand.nextInt(range) + start

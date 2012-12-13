@@ -36,6 +36,8 @@ sealed abstract class Area {
   def tick() : Unit
   def move(direction : Direction) : Unit
   def enter(playerCharacter : PlayerCharacter, entrance : (Int, Int)) : Unit
+  
+  def message : String = playerCharacter.map{ _.applyEffects() }.getOrElse("")
 }
 
 object Area {
@@ -114,9 +116,7 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   
   def drawMonsters(canvas : Array[Array[Char]]) = {
     for(((i, j), monster) <- monsters) {
-      canvas(i+1)(j+3) = monster.toChar
-      //println(playerPosition)
-      //println((i,j))
+      canvas(i + top)(j + left) = monster.toChar
     }
   }
   
@@ -128,9 +128,21 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   private def randomPosition() : (Int, Int) = (RNG.randInt(0, height), RNG.randInt(0, width))
   
   def tick() = {
-    if(playerCharacter != None)
-      monsters = monsters.map((a : ((Int,Int),Monster)) => (a._2.move(playerPosition, a._1), a._2))
-
+    for(pc <- playerCharacter) {
+      val updatedMonsters = monsters.map((a : ((Int,Int),Monster)) => (a._2.move(playerPosition, a._1), a._2))
+      
+      updatedMonsters.foreach { (a : ((Int,Int),Monster)) => if(a._1 == playerPosition) pc.receiveEffect(a._2.attack) }
+      
+      monsters = correctMonstersPosition(updatedMonsters.toList, monsters.toList, playerPosition).toMap
+    }
+  }
+  
+  def correctMonstersPosition(list : List[((Int, Int), Monster)], original : List[((Int, Int), Monster)], playerPosition : (Int, Int)) : List[((Int, Int), Monster)]= {
+    list match {
+      case Nil => Nil
+      case hd :: tl =>
+        (if(hd == playerPosition) original.head else hd) :: correctMonstersPosition(tl, original.tail, playerPosition)
+    }
   }
   
   def move(direction : Direction) = {
@@ -153,7 +165,6 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
     }
     else doors.get(newPlayerPosition) match {
       case Some(tunnel) => {
-        //if(movementDirection == entranceDirection) {
           playerCharacter foreach {
             tunnel.enter(_, toGlobal(newPlayerPosition))
           }
@@ -162,6 +173,14 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
       case None => {}
     }
     return false
+  }
+  
+  private def attack(monster : Monster)(player : PlayerCharacter) = {
+    
+  }
+  
+  private def attack(player : PlayerCharacter)(monster : Monster) = {
+    
   }
   
   private def inLimits(position : (Int, Int)) : Boolean = {
@@ -188,12 +207,6 @@ class Room(top : Int, left : Int, height : Int, width : Int) extends Area {
   def enter(playerCharacter : PlayerCharacter, entrance : (Int, Int)) = {
     this.playerCharacter = Some(playerCharacter)
     playerPosition = (entrance._1 - top, entrance._2 - left)
-    /*
-    doors.get(localCoordinates) match {
-      case Some(_) => playerPosition = localCoordinates
-      case None => throw new Exception("Assertion Failure: Player entered room from invalid entrance")
-    }
-    */
   }
 }
 
@@ -209,16 +222,6 @@ class Tunnel(start : (Int, Int), end : (Int, Int), val startRoom : Room, endRoom
   private val floorChar = '#'
   
   def draw(canvas : Array[Array[Char]]) = {
-    /*var counter = start
-    
-    val drawTunnel = (degreeOfFreedom : (Direction, Direction)) => {
-      canvas(counter._1)(counter._2) = '#'
-      counter = degreeOfFreedom._2.movement(counter._1, counter._2)
-    }
-    val drawPlayer = (degreeOfFreedom : (Direction, Direction)) => {
-      canvas(counter._1)(counter._2) = PlayerCharacter.toChar
-      counter = degreeOfFreedom._2.movement(counter._1, counter._2)
-    }*/
     
     val currentPosition = path.headPosition
     val list = path.toList
@@ -241,12 +244,6 @@ class Tunnel(start : (Int, Int), end : (Int, Int), val startRoom : Room, endRoom
     }
     
     drawLoop(start, 0, list)
-    //path.foreachLeft(drawTunnel)
-    //if(playerCharacter.isEmpty) path.forHead(drawTunnel) else path.forHead(drawPlayer)
-    //path.foreachRight(drawTunnel)
-    
-    //canvas(start._1)(start._2) = doorChar
-    //canvas(end._1)(end._2) = doorChar
   }
   
   def tick() : Unit = {

@@ -15,11 +15,10 @@ sealed abstract class Monster(_damage : Int, _health : Int) {
       case b : MonsterB => 'B'
   }
   
-  def attack(victim : PlayerCharacter) : Boolean = 
+  def attack : (String, PlayerCharacter => Unit) = 
   {
-    victim.sufferDamage(damage)    
+    ("The " + this.toString + " attacked you.", victim => victim.sufferDamage(damage))   
   }
-
 
   def sufferDamage(damage : Int) : Boolean = // retorna true se o monstro morreu
   {
@@ -41,9 +40,12 @@ sealed abstract class Monster(_damage : Int, _health : Int) {
         myPosition._1 == enemyPosition._1 + 1 && myPosition._2 == enemyPosition._1 + 1 ||
         myPosition._1 == enemyPosition._1 - 1 && myPosition._2 == enemyPosition._1 + 1 ||
         myPosition._1 == enemyPosition._1 + 1 && myPosition._2 == enemyPosition._2 - 1 ||
-        myPosition._1 == enemyPosition._1 - 1 && myPosition._2 == enemyPosition._2 - 1) {println("DANO");return(myPosition)}
+        myPosition._1 == enemyPosition._1 - 1 && myPosition._2 == enemyPosition._2 - 1)
+      {
+        println("DANO");
+        return(myPosition)
+      }
 
-      println("")
       retvalue = (0,1)
       if(enemyPosition._1 == myPosition._1)
         if(enemyPosition._2 > myPosition._2)

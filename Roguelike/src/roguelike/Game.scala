@@ -11,7 +11,7 @@ object Game {
   val dungeon = new Dungeon()
   
   def draw() : String = {
-    dungeon.draw() + "\nBusiness as usual"
+    dungeon.draw()
   }
   
   def update(input : Char) = {

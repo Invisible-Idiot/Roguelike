@@ -19,11 +19,9 @@ sealed abstract class Item extends Element{
 
 case class Equipament(damage : Int) extends Item
 {
-  def Equip(playerCharacter : PlayerCharacter) : Option[Equipament] = 
+  def Equip(playerCharacter : PlayerCharacter) = 
   {
-        var oldEquip : Option[Equipament]  = playerCharacter.getEquipament()
-        playerCharacter.setEquipament(Option(this))
-        return oldEquip
+        playerCharacter.equip(this)
       
   }
   def getDamage() : Int = this.damage

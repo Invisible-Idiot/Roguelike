@@ -143,7 +143,7 @@ class Dungeon() {
       drawing += '\n'
     }
     
-    return drawing.mkString
+    return drawing.mkString + forPlayerCharacter(_.message)
   }
   
   def move(direction : Direction) = {

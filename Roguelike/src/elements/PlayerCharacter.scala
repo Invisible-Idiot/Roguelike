@@ -5,12 +5,16 @@
 
 package elements
 
+
 class PlayerCharacter {
+  type Effect = (String, PlayerCharacter => Unit)
+  
   def toChar : Char = PlayerCharacter.toChar
+  private var effects : List[Effect] = List()
   private var items : List[Item] = List()
   private var health : Int = 100
   private var attackDamage : Int = 5
-  private var equipament : Option[Equipament] = None
+  private var attackMonster : Monster => Boolean = attackWith(Equipament(0))
   
   def dataToString() : String =
     {
@@ -30,6 +34,23 @@ class PlayerCharacter {
     items = items.union(List(item))
   }
   
+  def receiveEffect(effect : Effect) = {
+    effects = effect :: effects
+  }
+  
+  def applyEffects() : String = {
+    val identityEffect = ("", (you : PlayerCharacter) => {})
+    val composeEffect = (effect1 : Effect, effect2 : Effect) =>
+      (effect1._1 + " " + effect2._1, (x : PlayerCharacter) => {effect1._2(x); effect2._2(x)})
+      
+    val composedEffect = effects.foldRight(identityEffect)(composeEffect)
+    
+    effects = List()
+    
+    composedEffect._2(this)
+    return composedEffect._1
+  }
+  
   def sufferDamage(damage : Int) : Boolean = // retorna verdadeiro se o personagem morreu
   {
       health = health - damage
@@ -39,23 +60,19 @@ class PlayerCharacter {
         return false
   }
   
-  def attack(monster : Monster) : Boolean = 
+  def attack(monster : Monster) = attackMonster(monster)
+  
+  private def attackWith(equipment : Equipament)(monster : Monster) : Boolean = 
   {
-    if(equipament.isDefined)
-      monster.sufferDamage(attackDamage + equipament.get.getDamage)
-    else
-      monster.sufferDamage(attackDamage) 
+    effects = ("You attacked the " + monster.toString + ".", (you : PlayerCharacter) => {}) :: effects
+    
+    monster.sufferDamage(attackDamage + equipment.getDamage)
   }
   
-  def setEquipament(equip : Option[Equipament]) =
+  def equip(equip : Equipament) =
   {
-    this.equipament = equip
+    this.attackMonster = attackWith(equip)
   }
-  
-  def getEquipament() : Option[Equipament] = 
-    {
-      if(equipament.isDefined)this.equipament else None
-    }
   
   def Heal(heal : Int) =
   {
